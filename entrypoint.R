@@ -76,10 +76,11 @@ if (nrow(d_for_geocoding) > 0) {
   ## extract results, if a tie then take first returned result
   d_for_geocoding <- d_for_geocoding %>%
     dplyr::mutate(
-      row_index = 1:nrow(d_for_geocoding),
-      geocodes = purrr::map(geocodes, ~ .x %>%
-                              purrr::map(unlist) %>%
-                              as_tibble())
+        geocodes = purrr::map(
+          geocodes,
+          ~ purrr::map(.x, unlist) %>%
+            tibble::as_tibble(.name_repair = "unique")
+        )
     ) %>%
     tidyr::unnest(cols = c(geocodes)) %>%
     dplyr::group_by(row_index) %>%
