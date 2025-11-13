@@ -1,8 +1,15 @@
+# Stage 1: Download the database (so that caching helps)
+FROM alpine:latest AS downloader
+RUN apk add --no-cache wget
+RUN wget https://geomarker.s3.amazonaws.com/geocoder_2021.db -O /geocoder.db
+
+# Stage 2: Main image
 FROM ghcr.io/rocker-org/r-ver:4.4.3
+COPY --from=downloader /geocoder.db /opt/geocoder.db
 
 # DeGAUSS container metadata
 ENV degauss_name="geocoder"
-ENV degauss_version="3.4.1"
+ENV degauss_version="3.5.0"
 ENV degauss_description="geocodes"
 ENV degauss_argument="valid_geocode_score_threshold [default: 0.5]"
 

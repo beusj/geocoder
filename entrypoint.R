@@ -109,33 +109,10 @@ if (nrow(d_for_geocoding) > 0) {
   ## extract results, if a tie then take first returned result
   d_for_geocoding <- d_for_geocoding %>%
     dplyr::mutate(
-        row_index = 1:nrow(d_for_geocoding),
-        geocodes = purrr::map(
-          geocodes,
-          ~ {
-            # Handle NULL or empty geocode results
-            if (is.null(.x) || length(.x) == 0) {
-              return(list(out_template))
-            }
-            
-            # Map over each element and ensure proper structure
-            result <- purrr::map(.x, function(item) {
-              if (is.null(item) || length(item) == 0) {
-                return(out_template)
-              }
-              unlist(item)
-            })
-            
-            # Convert to tibble with name repair
-            tryCatch({
-              tibble::as_tibble(result, .name_repair = "unique")
-            }, error = function(e) {
-              # If conversion fails, return the template
-              cat(sprintf("[ERROR] Failed to convert geocode result to tibble: %s\n", e$message), file = stdout())
-              out_template
-            })
-          }
-        )
+      row_index = 1:nrow(d_for_geocoding),
+      geocodes = purrr::map(geocodes, ~ .x %>%
+                              purrr::map(unlist) %>%
+                              as_tibble())
     ) %>%
     tidyr::unnest(cols = c(geocodes)) %>%
     dplyr::group_by(row_index) %>%
