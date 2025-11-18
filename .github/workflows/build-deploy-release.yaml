@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       registry: ghcr.io
-      # username: ${{ github.repository_owner }}
-      username: degauss-org
+      username: ${{ github.repository_owner }}
+      # username: degauss-org
       repository: geocoder
     strategy:
       fail-fast: false
