@@ -1,11 +1,4 @@
-# Stage 1: Download the database (so that caching helps)
-FROM alpine:latest AS downloader
-RUN apk add --no-cache wget
-RUN wget https://geomarker.s3.amazonaws.com/geocoder_2021.db -O /geocoder.db
-
-# Stage 2: Main image
 FROM ghcr.io/rocker-org/r-ver:4.4.3
-COPY --from=downloader /geocoder.db /opt/geocoder.db
 
 # DeGAUSS container metadata
 ENV degauss_name="geocoder"
@@ -18,6 +11,9 @@ LABEL "org.degauss.name"="${degauss_name}"
 LABEL "org.degauss.version"="${degauss_version}"
 LABEL "org.degauss.description"="${degauss_description}"
 LABEL "org.degauss.argument"="${degauss_argument}"
+
+ADD https://geomarker.s3.amazonaws.com/geocoder_2021.db /opt/geocoder.db
+# COPY geocoder.db /opt/geocoder.db
 
 RUN apt-get update && apt-get install -y \
     libssl-dev \
@@ -54,16 +50,9 @@ WORKDIR /app
 RUN R --quiet -e "install.packages('remotes', repos = c(CRAN = 'https://packagemanager.posit.co/cran/latest'))"
 RUN R --quiet -e "remotes::install_github('rstudio/renv@v1.1.5')"
 
-# Fix for bit package compilation issue with R 4.5.x
-# The bit package needs R_NO_REMAP to be defined before including R headers
-RUN mkdir -p /root/.R && \
-    echo 'PKG_CFLAGS = -DR_NO_REMAP' > /root/.R/Makevars
 
 COPY renv.lock .
 RUN R --quiet -e "renv::restore(repos = c(CRAN = 'https://packagemanager.posit.co/cran/latest'))"
-
-# Clean up Makevars after installation
-RUN rm -f /root/.R/Makevars
 
 COPY geocode.rb .
 COPY entrypoint.R .
