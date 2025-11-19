@@ -1,0 +1,70 @@
+name: Manually Rebuild Docker
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional image tag to push (e.g., v1.2.3). If empty, use repo tag at HEAD or short SHA."
+        required: false
+        default: ""
+
+jobs:
+  deploy-images:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      USERNAME: ${{ github.event.organization.login || github.repository_owner }}
+      REPOSITORY: geocoder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed to read tags
+
+      - name: Determine image tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="${REGISTRY}/${USERNAME}/${REPOSITORY}"
+
+          INPUT_TAG="${{ github.event.inputs.tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            # Use exact tag at HEAD if present; otherwise short SHA
+            TAG="$(git describe --tags --exact-match 2>/dev/null || true)"
+            if [ -z "$TAG" ]; then
+              TAG="$(git rev-parse --short HEAD)"
+            fi
+          fi
+
+          echo "image=${IMAGE}" >> "$GITHUB_ENV"
+          echo "tag=${TAG}" >> "$GITHUB_ENV"
+          echo "versioned=${IMAGE}:${TAG}" >> "$GITHUB_ENV"
+          echo "latest=${IMAGE}:latest" >> "$GITHUB_ENV"
+
+          echo "Will publish tags:"
+          echo " - ${IMAGE}:${TAG}"
+          echo " - ${IMAGE}:latest"
+
+      - name: Build image
+        run: |
+          docker build -t "${{ env.versioned }}" -t "${{ env.latest }}" .
+
+      - name: Test image
+        run: |
+          docker run --rm -v "${PWD}/test":/tmp "${{ env.versioned }}" my_address_file.csv
+          docker run --rm -v "${PWD}/test":/tmp "${{ env.versioned }}" my_address_file.csv 0.6
+          docker run --rm -v "${PWD}/test":/tmp "${{ env.versioned }}" my_address_file.csv all
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.USERNAME }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push images
+        run: |
+          docker push "${{ env.versioned }}"
+          docker push "${{ env.latest }}"
