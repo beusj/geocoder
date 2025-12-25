@@ -26,22 +26,39 @@ This is the initial scaffolding for the Python migration. The geocoding engine i
   - Output file naming (matches original format)
   - Summary reporting with tabulate
 - ✅ Requirements file (`requirements.txt`) - Python dependencies
+- ✅ **Address parsing module (`address.py`)** - 330 lines
+  - Complete address component parser (number, street, city, state, ZIP)
+  - Street and city tokenization for fuzzy matching
+  - Abbreviation expansion
+  - PO Box and intersection detection
+- ✅ **Metaphone module (`metaphone.py`)** - 190 lines
+  - Phonetic encoding algorithm
+  - Similarity scoring
+  - Support for external metaphone libraries
+- ✅ **Database module (`database.py`)** - 210 lines
+  - DuckDB connection management
+  - Spatial and fuzzystrsim extension loading
+  - Thread-safe query execution
+  - Query method stubs (ready for schema)
 
 ## TODO
 
 ### Phase 1: Core Geocoding Engine
-- [ ] `database.py` - DuckDB interface with spatial extension
-  - Set up DuckDB connection
-  - Load spatial extension
-  - Query street range data
-  - Implement scoring logic
-- [ ] `address.py` - Address parsing
-  - Port regex patterns from Ruby
-  - Parse street number, name, city, state, ZIP
-  - Handle edge cases (intersections, etc.)
-- [ ] `metaphone.py` - Phonetic matching
-  - Implement or integrate metaphone algorithm
-  - Use for fuzzy street name matching
+- [x] `database.py` - DuckDB interface with spatial extension
+  - [x] Set up DuckDB connection
+  - [x] Load spatial extension (spatial + fuzzystrsim)
+  - [x] Thread-safe query execution
+  - [ ] Query street range data (pending database migration)
+  - [ ] Implement scoring logic (pending schema)
+- [x] `address.py` - Address parsing
+  - [x] Port regex patterns from Ruby
+  - [x] Parse street number, name, city, state, ZIP
+  - [x] Handle edge cases (PO boxes, intersections)
+  - [x] Street and city tokenization for matching
+- [x] `metaphone.py` - Phonetic matching
+  - [x] Implement metaphone algorithm
+  - [x] Phonetic similarity scoring
+  - [x] Support for external metaphone libraries
 
 ### Phase 2: Database Migration
 - [ ] Convert SQLite database to DuckDB format
