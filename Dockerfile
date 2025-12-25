@@ -53,7 +53,7 @@ LABEL "org.degauss.argument"="${degauss_argument}"
 RUN mkdir /app
 WORKDIR /app
 COPY --from=compiler /app/Geocoder-US-*.gem Geocoder-US.gem
-ADD https://colebrokamp-dropbox.s3.amazonaws.com/geocoder.db /opt/geocoder.db
+ADD https://choa-geocoding.s3.amazonaws.com/degauss/2021/geocoder.db /opt/geocoder.db
 COPY entrypoint.R .
 COPY geocode.rb .
 
