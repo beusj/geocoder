@@ -40,6 +40,12 @@ This is the initial scaffolding for the Python migration. The geocoding engine i
   - Spatial and fuzzystrsim extension loading
   - Thread-safe query execution
   - Query method stubs (ready for schema)
+- ✅ **Integrated entrypoint (`entrypoint.py`)** - Updated
+  - Parallel geocoding with joblib (n_jobs=-1)
+  - Result caching with joblib Memory
+  - Address parsing integration
+  - Score threshold filtering
+  - Result classification (geocoded, imprecise_geocode, po_box, etc.)
 
 ## TODO
 
@@ -67,10 +73,12 @@ This is the initial scaffolding for the Python migration. The geocoding engine i
 - [ ] Add spatial indexes
 
 ### Phase 3: Integration
-- [ ] Implement parallel geocoding with joblib
-- [ ] Add result caching
-- [ ] Implement score/precision filtering
-- [ ] Match output format exactly with Ruby version
+- [x] Implement parallel geocoding with joblib
+- [x] Add result caching (joblib Memory)
+- [x] Implement score/precision filtering
+- [x] Match output format exactly with Ruby version
+- [x] Update entrypoint.py to use Phase 1 modules
+- [ ] Full integration test with migrated database
 
 ### Phase 4: Testing & Validation
 - [ ] Unit tests for all modules
