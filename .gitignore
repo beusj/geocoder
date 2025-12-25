@@ -20,3 +20,16 @@ test/d_for_geocoding.rds
 test/geocoding_cache/
 test/tmp*
 /.Rprofile
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/

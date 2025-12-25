@@ -1,0 +1,149 @@
+# Python Migration - Geocoder
+
+This directory contains the initial Python implementation of the geocoder, migrating from the Ruby + R stack to a pure Python + DuckDB solution.
+
+## Status: 🚧 Work in Progress
+
+This is the initial scaffolding for the Python migration. The geocoding engine is not yet implemented.
+
+## Completed
+
+- ✅ Python package structure (`geocoder_us/`)
+- ✅ Constants module (`constants.py`) - ~1000 lines ported from Ruby
+  - Directional prefixes/suffixes (North, South, etc.)
+  - Street type qualifiers
+  - Prefix and suffix street types with canonical abbreviations
+  - US state and territory names
+- ✅ Preprocessing module (`preprocessing.py`) - Address cleaning and validation
+  - `clean_address()` - Normalize whitespace and special characters
+  - `address_is_po_box()` - Detect PO Box addresses
+  - `address_is_institutional()` - Flag institutional addresses
+  - `address_is_nonaddress()` - Detect placeholder text
+- ✅ Main entrypoint (`entrypoint.py`) - CLI interface
+  - Argument parsing (filename, score_threshold)
+  - CSV I/O with pandas
+  - Address preprocessing pipeline
+  - Output file naming (matches original format)
+  - Summary reporting with tabulate
+- ✅ Requirements file (`requirements.txt`) - Python dependencies
+- ✅ **Address parsing module (`address.py`)** - 330 lines
+  - Complete address component parser (number, street, city, state, ZIP)
+  - Street and city tokenization for fuzzy matching
+  - Abbreviation expansion
+  - PO Box and intersection detection
+- ✅ **Metaphone module (`metaphone.py`)** - 190 lines
+  - Phonetic encoding algorithm
+  - Similarity scoring
+  - Support for external metaphone libraries
+- ✅ **Database module (`database.py`)** - 210 lines
+  - DuckDB connection management
+  - Spatial and fuzzystrsim extension loading
+  - Thread-safe query execution
+  - Query method stubs (ready for schema)
+- ✅ **Integrated entrypoint (`entrypoint.py`)** - Updated
+  - Parallel geocoding with joblib (n_jobs=-1)
+  - Result caching with joblib Memory
+  - Address parsing integration
+  - Score threshold filtering
+  - Result classification (geocoded, imprecise_geocode, po_box, etc.)
+
+## TODO
+
+### Phase 1: Core Geocoding Engine
+- [x] `database.py` - DuckDB interface with spatial extension
+  - [x] Set up DuckDB connection
+  - [x] Load spatial extension (spatial + fuzzystrsim)
+  - [x] Thread-safe query execution
+  - [ ] Query street range data (pending database migration)
+  - [ ] Implement scoring logic (pending schema)
+- [x] `address.py` - Address parsing
+  - [x] Port regex patterns from Ruby
+  - [x] Parse street number, name, city, state, ZIP
+  - [x] Handle edge cases (PO boxes, intersections)
+  - [x] Street and city tokenization for matching
+- [x] `metaphone.py` - Phonetic matching
+  - [x] Implement metaphone algorithm
+  - [x] Phonetic similarity scoring
+  - [x] Support for external metaphone libraries
+
+### Phase 2: Database Migration
+- [ ] Convert SQLite database to DuckDB format
+- [ ] Migrate WKB geometries to DuckDB spatial types
+- [ ] Test database queries and performance
+- [ ] Add spatial indexes
+
+### Phase 3: Integration
+- [x] Implement parallel geocoding with joblib
+- [x] Add result caching (joblib Memory)
+- [x] Implement score/precision filtering
+- [x] Match output format exactly with Ruby version
+- [x] Update entrypoint.py to use Phase 1 modules
+- [ ] Full integration test with migrated database
+
+### Phase 4: Testing & Validation
+- [ ] Unit tests for all modules
+- [ ] Integration tests with test CSV file
+- [ ] Validate geocoding accuracy vs Ruby version
+- [ ] Performance benchmarking
+
+### Phase 5: Docker
+- [ ] Create new Dockerfile with Python base image
+- [ ] Remove Ruby and R dependencies
+- [ ] Test container build and execution
+- [ ] Update documentation
+
+## Architecture
+
+### Current (Ruby + R)
+```
+Docker → entrypoint.R → geocode.rb → Ruby Geocoder → SQLite (with C extensions)
+```
+
+### Target (Python)
+```
+Docker → entrypoint.py → geocoder_us/ → DuckDB (with spatial extension)
+```
+
+## Usage (when complete)
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Geocode addresses
+python entrypoint.py my_addresses.csv          # Default threshold 0.5
+python entrypoint.py my_addresses.csv 0.6      # Custom threshold
+python entrypoint.py my_addresses.csv all      # All results
+```
+
+## Testing Current Implementation
+
+The entrypoint can be run now but will return placeholder geocoding results:
+
+```bash
+python entrypoint.py test/my_address_file.csv
+```
+
+Output will show:
+- File reading and validation
+- Address preprocessing statistics
+- Placeholder geocoding message
+- Output file generation
+- Summary table (showing "not_implemented" status)
+
+## Development Notes
+
+- The `constants.py` module is a direct port of Ruby `constants.rb` (~670 lines)
+- The `TwoWayMap` class provides bidirectional lookup like Ruby's `Map` class
+- Address preprocessing functions match the logic from the `dht` R package
+- CLI interface matches the original R entrypoint arguments and output format
+
+## Next Steps
+
+To continue the migration:
+
+1. Start with `database.py` to establish DuckDB connection and basic queries
+2. Port `address.py` parsing logic from Ruby
+3. Integrate a metaphone library or implement the algorithm
+4. Test with small address samples before full database migration
+5. Validate results match the Ruby implementation exactly
