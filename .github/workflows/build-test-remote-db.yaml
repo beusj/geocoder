@@ -1,9 +1,9 @@
-name: Test Building without Deployment
+name: build-test-remote-db
 
 on:
-#   push:
-#     branches:
-#       - main
+  push:
+    branches:
+      - test_db_source
   workflow_dispatch:
     inputs:
         branch:
@@ -11,7 +11,7 @@ on:
           required: true
           default: "main"
         geo_db:
-          description: "Geocoder database to use for testing (e.g., 'latest' or a specific tag). Typically a geocoder.db file hosted online."
+          description: "Geocoder database to use for testing (e.g., 'latest' or a specific tag). Typically a geocoder.db file hosted online. This should be the full URL or S3 path, including geocoder_2021.db or whatever its name might be."
           required: true
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
 
       - name: Build image
         run: |
-          docker build --build-arg GEOCODER_S3_LOCATION="${{ github.event.inputs.geo_db }}" -t "${{ env.versioned }}" .
+          docker build --build-arg GEOCODER_S3_LOCATION="${{ github.event.inputs.geo_db }}" -t "${{ env.versioned }}" ./Dockerfiles/Dockerfile-remote-db
 
       - name: Test image
         run: |
