@@ -12,7 +12,11 @@ LABEL "org.degauss.version"="${degauss_version}"
 LABEL "org.degauss.description"="${degauss_description}"
 LABEL "org.degauss.argument"="${degauss_argument}"
 
-ADD https://choa-geocoding.s3.amazonaws.com/degauss/2021/geocoder.db /opt/geocoder.db
+
+# Allow S3 location to be set via build arg and env
+ARG GEOCODER_S3_LOCATION
+ENV GEOCODER_S3_LOCATION=${GEOCODER_S3_LOCATION}
+ADD ${GEOCODER_S3_LOCATION} /opt/geocoder.db
 # COPY geocoder.db /opt/geocoder.db
 
 RUN apt-get update && apt-get install -y \

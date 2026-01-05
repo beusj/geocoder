@@ -6,11 +6,13 @@ on:
     types: [release-build, force-rebuild]
 jobs:
   deploy-images:
+    environment: geocoder_release_build
     runs-on: ubuntu-latest
     env:
       registry: ghcr.io
       username: ${{ github.event.organization.login || github.repository_owner }}
       repository: geocoder
+      GEOCODER_S3_LOCATION: ${{ vars.GEOCODER_S3_LOCATION }}
     strategy:
       fail-fast: false
     steps:
@@ -27,7 +29,7 @@ jobs:
           echo "versioned=${versioned}" >> $GITHUB_ENV
       - name: build container
         run: |
-          docker build -t ${{ env.container }} .
+          docker build --build-arg GEOCODER_S3_LOCATION="${GEOCODER_S3_LOCATION}" -t ${{ env.container }} .
       - name: test container
         run: |
           docker run --rm -v "${PWD}/test":/tmp ${{ env.container }} my_address_file.csv

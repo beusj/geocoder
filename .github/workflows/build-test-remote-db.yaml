@@ -1,0 +1,60 @@
+name: Test Building without Deployment
+
+on:
+#   push:
+#     branches:
+#       - main
+  workflow_dispatch:
+    inputs:
+        branch:
+          description: "Branch to build and test"
+          required: true
+          default: "main"
+        geo_db:
+          description: "Geocoder database to use for testing (e.g., 'latest' or a specific tag). Typically a geocoder.db file hosted online."
+          required: true
+
+jobs:
+  deploy-images:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      USERNAME: ${{ github.event.organization.login || github.repository_owner }}
+      REPOSITORY: geocoder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # needed to read tags
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Determine image tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="${REGISTRY}/${USERNAME}/${REPOSITORY}"
+
+          # Use exact tag at HEAD if present; otherwise short SHA
+          TAG="$(git describe --tags --exact-match 2>/dev/null || true)"
+          if [ -z "$TAG" ]; then
+            TAG="$(git rev-parse --short HEAD)"
+          fi
+
+          echo "image=${IMAGE}" >> "$GITHUB_ENV"
+          echo "tag=${TAG}" >> "$GITHUB_ENV"
+          echo "versioned=${IMAGE}:${TAG}" >> "$GITHUB_ENV"
+          echo "latest=${IMAGE}:latest" >> "$GITHUB_ENV"
+
+          echo "Will publish tags:"
+          echo " - ${IMAGE}:${TAG}"
+          echo " - ${IMAGE}:latest"
+
+      - name: Build image
+        run: |
+          docker build --build-arg GEOCODER_S3_LOCATION="${{ github.event.inputs.geo_db }}" -t "${{ env.versioned }}" .
+
+      - name: Test image
+        run: |
+          docker run --rm -v "${PWD}/test":/tmp "${{ env.versioned }}" my_address_file.csv
+          docker run --rm -v "${PWD}/test":/tmp "${{ env.versioned }}" my_address_file.csv 0.6
+          docker run --rm -v "${PWD}/test":/tmp "${{ env.versioned }}" my_address_file.csv all
